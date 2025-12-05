@@ -1,0 +1,33 @@
+{
+    "manifest_version": 3,
+    "name": "Shariah Compliance Checker",
+    "version": "1.0.0",
+    "description": "Check if stocks are Shariah-compliant by hovering over ticker symbols",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "http://localhost:8000/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "floatingWidget.js",
+                "content.js"
+            ],
+            "css": [
+                "floatingWidget.css"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shariah Compliance Checker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 380px;
+            min-height: 200px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #fff;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .header-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .header-text p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .search-section {
+            margin-bottom: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .search-input:focus {
+            border-color: #6366f1;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .search-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .search-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-section {
+            display: none;
+        }
+
+        .result-section.visible {
+            display: block;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .ticker-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ticker-symbol {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.compliant {
+            background: linear-gradient(135deg, #00c853 0%, #69f0ae 100%);
+            color: #000;
+        }
+
+        .status-badge.not-compliant {
+            background: linear-gradient(135deg, #ff1744 0%, #ff5252 100%);
+            color: #fff;
+        }
+
+        .status-badge.doubtful {
+            background: linear-gradient(135deg, #ff9100 0%, #ffc400 100%);
+            color: #000;
+        }
+
+        .source-info {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .breakdown-section {
+            margin-top: 16px;
+        }
+
+        .breakdown-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .breakdown-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .breakdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .breakdown-item.passed {
+            border-left: 3px solid #00c853;
+        }
+
+        .breakdown-item.failed {
+            border-left: 3px solid #ff1744;
+        }
+
+        .breakdown-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .breakdown-rule {
+            font-size: 13px;
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .breakdown-values {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .breakdown-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 4px;
+        }
+
+        .breakdown-status {
+            font-size: 14px;
+        }
+
+        .breakdown-reason {
+            font-size: 10px;
+            color: #ff5252;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .error-message {
+            display: none;
+            padding: 16px;
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid rgba(255, 23, 68, 0.2);
+            border-radius: 10px;
+            color: #ff5252;
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .error-message.visible {
+            display: block;
+        }
+
+        .footer {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .footer-text {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-icon">☪️</div>
+        <div class="header-text">
+            <h1>Shariah Compliance Checker</h1>
+            <p>Check if stocks are Halal to invest in</p>
+        </div>
+    </div>
+
+    <div class="search-section">
+        <div class="search-box">
+            <input type="text" 
+                   class="search-input" 
+                   id="tickerInput" 
+                   placeholder="Enter ticker (e.g., AAPL)"
+                   maxlength="5">
+            <button class="search-btn" id="checkBtn">Check</button>
+        </div>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="loading" id="loadingSection" style="display: none;">
+        <div class="spinner"></div>
+        <div class="loading-text">Checking compliance...</div>
+    </div>
+
+    <div class="result-section" id="resultSection">
+        <div class="result-header">
+            <div class="ticker-info">
+                <span class="ticker-symbol" id="tickerSymbol">AAPL</span>
+                <span class="status-badge" id="statusBadge">✅ Halal</span>
+            </div>
+        </div>
+        <div class="source-info" id="sourceInfo">Source: AAOIFI</div>
+
+        <div class="breakdown-section" id="breakdownSection">
+            <div class="breakdown-title">Compliance Breakdown</div>
+            <div class="breakdown-list" id="breakdownList">
+                <!-- Breakdown items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p class="footer-text">Data from Zoya, Muslim Xchange, Musaffa & AAOIFI screening</p>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
