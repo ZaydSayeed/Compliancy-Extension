@@ -7,6 +7,7 @@ This is the fallback screening method when no external sources provide data.
 
 from typing import Dict, Any, List
 from utils.fetch_financials import fetch_financials
+from models import ScreeningResponse, RuleBreakdown
 
 
 # AAOIFI Shariah screening thresholds
@@ -27,7 +28,7 @@ NON_COMPLIANT_SECTORS = [
 ]
 
 
-async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
+async def run_aaoifi_screening(ticker: str) -> ScreeningResponse:
     """
     Perform AAOIFI-based Shariah compliance screening.
     
@@ -41,12 +42,14 @@ async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
         ticker: Stock ticker symbol (e.g., 'AAPL')
         
     Returns:
-        Dict with compliance status and detailed breakdown
+        ScreeningResponse with compliance status and detailed breakdown
     """
+    print(f"[AAOIFI] Using fallback screening for {ticker}")
+    
     # Fetch financial data
     financials = await fetch_financials(ticker)
     
-    breakdown: List[Dict[str, Any]] = []
+    breakdown: List[RuleBreakdown] = []
     all_passed = True
     
     # 1. Debt Ratio Check
@@ -55,13 +58,13 @@ async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
     if not debt_passed:
         all_passed = False
     
-    breakdown.append({
-        "rule": "Debt Ratio",
-        "value": f"{debt_ratio:.1f}%",
-        "limit": f"< {DEBT_RATIO_LIMIT:.0f}%",
-        "passed": debt_passed,
-        "reason": "Exceeds limit" if not debt_passed else None
-    })
+    breakdown.append(RuleBreakdown(
+        rule="Debt Ratio",
+        value=f"{debt_ratio:.1f}%",
+        limit=f"< {DEBT_RATIO_LIMIT:.0f}%",
+        passed=debt_passed,
+        reason="Exceeds limit" if not debt_passed else None
+    ))
     
     # 2. Cash Ratio Check
     cash_ratio = financials.get("cash_ratio", 0)
@@ -69,13 +72,13 @@ async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
     if not cash_passed:
         all_passed = False
     
-    breakdown.append({
-        "rule": "Cash Ratio",
-        "value": f"{cash_ratio:.1f}%",
-        "limit": f"< {CASH_RATIO_LIMIT:.0f}%",
-        "passed": cash_passed,
-        "reason": "Exceeds limit" if not cash_passed else None
-    })
+    breakdown.append(RuleBreakdown(
+        rule="Cash Ratio",
+        value=f"{cash_ratio:.1f}%",
+        limit=f"< {CASH_RATIO_LIMIT:.0f}%",
+        passed=cash_passed,
+        reason="Exceeds limit" if not cash_passed else None
+    ))
     
     # 3. Non-Halal Revenue Check
     non_halal_revenue = financials.get("non_halal_revenue", 0)
@@ -83,13 +86,13 @@ async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
     if not revenue_passed:
         all_passed = False
     
-    breakdown.append({
-        "rule": "Non-Halal Revenue",
-        "value": f"{non_halal_revenue:.1f}%",
-        "limit": f"< {NON_HALAL_REVENUE_LIMIT:.0f}%",
-        "passed": revenue_passed,
-        "reason": "Exceeds limit" if not revenue_passed else None
-    })
+    breakdown.append(RuleBreakdown(
+        rule="Non-Halal Revenue",
+        value=f"{non_halal_revenue:.1f}%",
+        limit=f"< {NON_HALAL_REVENUE_LIMIT:.0f}%",
+        passed=revenue_passed,
+        reason="Exceeds limit" if not revenue_passed else None
+    ))
     
     # 4. Business Sector Check
     sector = financials.get("sector", "Unknown")
@@ -98,16 +101,20 @@ async def aaoifi_screening(ticker: str) -> Dict[str, Any]:
     if not sector_passed:
         all_passed = False
     
-    breakdown.append({
-        "rule": "Sector",
-        "value": sector,
-        "limit": "Allowed",
-        "passed": sector_passed,
-        "reason": "Prohibited industry" if not sector_passed else None
-    })
+    breakdown.append(RuleBreakdown(
+        rule="Sector",
+        value=sector,
+        limit="Allowed",
+        passed=sector_passed,
+        reason="Prohibited industry" if not sector_passed else None
+    ))
     
-    return {
-        "status": "compliant" if all_passed else "not_compliant",
-        "source": "AAOIFI",
-        "breakdown": breakdown
-    }
+    status = "compliant" if all_passed else "not_compliant"
+    print(f"[AAOIFI] Returning result for {ticker}: {status}")
+    
+    return ScreeningResponse(
+        ticker=ticker.upper(),
+        status=status,
+        source="AAOIFI",
+        breakdown=breakdown
+    )

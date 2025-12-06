@@ -5,10 +5,12 @@ Musaffa is the third priority source for compliance checks.
 
 import httpx
 from bs4 import BeautifulSoup
-from typing import Optional, Dict, Any
+from models import ScreeningResponse, RuleBreakdown
+
+BASE_URL = "https://musaffa.com/stocks/"
 
 
-async def check_musaffa(ticker: str) -> Optional[Dict[str, Any]]:
+async def get_musaffa_screening(ticker: str):
     """
     Check Shariah compliance status from Musaffa.
     
@@ -16,56 +18,12 @@ async def check_musaffa(ticker: str) -> Optional[Dict[str, Any]]:
         ticker: Stock ticker symbol (e.g., 'AAPL')
         
     Returns:
-        Dict with compliance data if found, None otherwise.
-        Example: {
-            "status": "compliant" | "not_compliant" | "doubtful",
-            "source": "Musaffa",
-            "breakdown": [...]
-        }
+        ScreeningResponse if verdict found, None otherwise.
     """
     try:
-        # Placeholder implementation
-        # In production, this would scrape: https://musaffa.com/stocks/{ticker}
-        url = f"https://musaffa.com/stocks/{ticker.upper()}"
-        
-        async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.get(url, follow_redirects=True)
-            
-            if response.status_code != 200:
-                return None
-            
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Placeholder: Look for compliance status in page
-            # This would need to be updated based on actual Musaffa page structure
-            
-            # Look for compliance rating
-            rating_element = soup.find(attrs={"data-shariah-rating": True})
-            
-            if rating_element:
-                rating = rating_element.get("data-shariah-rating", "").lower()
-                
-                if rating in ["compliant", "halal"]:
-                    return {
-                        "status": "compliant",
-                        "source": "Musaffa",
-                        "breakdown": []
-                    }
-                elif rating in ["not compliant", "non-compliant", "haram"]:
-                    return {
-                        "status": "not_compliant",
-                        "source": "Musaffa",
-                        "breakdown": []
-                    }
-                elif rating in ["questionable", "doubtful"]:
-                    return {
-                        "status": "doubtful",
-                        "source": "Musaffa",
-                        "breakdown": []
-                    }
-            
-            return None
-            
+        # Placeholder until actual structure is added
+        print(f"[Musaffa] Checking {ticker}... (placeholder - returning None)")
+        return None
     except Exception as e:
-        print(f"[Musaffa] Error checking {ticker}: {e}")
+        print(f"[Musaffa] Scraper error: {e}")
         return None

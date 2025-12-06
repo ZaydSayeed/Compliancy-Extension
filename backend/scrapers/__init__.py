@@ -1,4 +1,4 @@
 # Scrapers package
-from .zoya import check_zoya
-from .muslim_xchange import check_muslim_xchange
-from .musaffa import check_musaffa
+from .zoya import get_zoya_screening
+from .muslim_xchange import get_muslim_xchange_screening
+from .musaffa import get_musaffa_screening

@@ -11,12 +11,13 @@ It aggregates data from multiple sources:
 
 from fastapi import FastAPI, Query, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List, Optional
 import re
 
-from scrapers import check_zoya, check_muslim_xchange, check_musaffa
-from screening import aaoifi_screening
+from models import ScreeningResponse, RuleBreakdown
+from scrapers.zoya import get_zoya_screening
+from scrapers.muslim_xchange import get_muslim_xchange_screening
+from scrapers.musaffa import get_musaffa_screening
+from screening.aaoifi import run_aaoifi_screening
 
 
 app = FastAPI(
@@ -33,23 +34,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class BreakdownItem(BaseModel):
-    """Individual compliance rule check result."""
-    rule: str
-    value: str
-    limit: str
-    passed: bool
-    reason: Optional[str] = None
-
-
-class ComplianceResponse(BaseModel):
-    """Response model for compliance check."""
-    ticker: str
-    status: str  # "compliant", "not_compliant", "doubtful"
-    source: str  # "Zoya", "Muslim Xchange", "Musaffa", "AAOIFI"
-    breakdown: List[BreakdownItem]
 
 
 def validate_ticker(ticker: str) -> str:
@@ -88,7 +72,7 @@ async def root():
     }
 
 
-@app.get("/check", response_model=ComplianceResponse)
+@app.get("/check", response_model=ScreeningResponse)
 async def check_compliance(ticker: str = Query(..., description="Stock ticker symbol (e.g., AAPL)")):
     """
     Check Shariah compliance for a stock ticker.
@@ -103,51 +87,39 @@ async def check_compliance(ticker: str = Query(..., description="Stock ticker sy
         ticker: Stock ticker symbol (e.g., 'AAPL', 'TSLA')
         
     Returns:
-        ComplianceResponse with status, source, and breakdown
+        ScreeningResponse with status, source, and breakdown
     """
     # Validate ticker
     ticker = validate_ticker(ticker)
     
+    print(f"\n{'='*50}")
+    print(f"[API] Checking compliance for: {ticker}")
+    print(f"{'='*50}")
+    
     # Try sources in priority order
     
     # 1. Try Zoya first
-    result = await check_zoya(ticker)
+    result = await get_zoya_screening(ticker)
     if result:
-        return ComplianceResponse(
-            ticker=ticker,
-            status=result["status"],
-            source=result["source"],
-            breakdown=[BreakdownItem(**item) for item in result.get("breakdown", [])]
-        )
+        print(f"[API] ✓ Returning Zoya result")
+        return result
     
     # 2. Try Muslim Xchange
-    result = await check_muslim_xchange(ticker)
+    result = await get_muslim_xchange_screening(ticker)
     if result:
-        return ComplianceResponse(
-            ticker=ticker,
-            status=result["status"],
-            source=result["source"],
-            breakdown=[BreakdownItem(**item) for item in result.get("breakdown", [])]
-        )
+        print(f"[API] ✓ Returning Muslim Xchange result")
+        return result
     
     # 3. Try Musaffa
-    result = await check_musaffa(ticker)
+    result = await get_musaffa_screening(ticker)
     if result:
-        return ComplianceResponse(
-            ticker=ticker,
-            status=result["status"],
-            source=result["source"],
-            breakdown=[BreakdownItem(**item) for item in result.get("breakdown", [])]
-        )
+        print(f"[API] ✓ Returning Musaffa result")
+        return result
     
     # 4. Fallback to AAOIFI screening
-    result = await aaoifi_screening(ticker)
-    return ComplianceResponse(
-        ticker=ticker,
-        status=result["status"],
-        source=result["source"],
-        breakdown=[BreakdownItem(**item) for item in result.get("breakdown", [])]
-    )
+    print(f"[API] Using AAOIFI fallback")
+    result = await run_aaoifi_screening(ticker)
+    return result
 
 
 if __name__ == "__main__":

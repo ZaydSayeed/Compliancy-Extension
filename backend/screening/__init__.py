@@ -1,2 +1,2 @@
 # Screening package
-from .aaoifi import aaoifi_screening
+from .aaoifi import run_aaoifi_screening
